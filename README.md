@@ -2,7 +2,7 @@
 
 > A dark theme for [Blender](https://www.blender.org).
 
-![screenshot](./screenshot.png)
+![Screenshot](./screenshot.png)
 
 ## Install
 
