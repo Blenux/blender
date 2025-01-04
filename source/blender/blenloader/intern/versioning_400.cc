@@ -3079,6 +3079,32 @@ static void hide_simulation_node_skip_socket_value(Main &bmain)
   }
 }
 
+static void version_geometry_nodes_primitive_pivots(bNodeTree &ntree)
+{
+  LISTBASE_FOREACH_MUTABLE (bNode *, node, &ntree.nodes) {
+    if (!ELEM(node->type, GEO_NODE_MESH_PRIMITIVE_GRID, GEO_NODE_MESH_PRIMITIVE_CUBE)) {
+      continue;
+    }
+
+    if (node->storage) {
+      MEM_freeN(node->storage);
+    }
+
+    if (node->type == GEO_NODE_MESH_PRIMITIVE_GRID) {
+      NodeGeometryMeshGrid *storage = (NodeGeometryMeshGrid *)MEM_callocN(
+          sizeof(NodeGeometryMeshGrid), "NodeGeometryMeshGrid");
+      node->storage = storage;
+      storage->pivot = NODE_MESH_GRID_PIVOT_CENTER;
+    }
+    else { /* CUBE */
+      NodeGeometryMeshCube *storage = (NodeGeometryMeshCube *)MEM_callocN(
+          sizeof(NodeGeometryMeshCube), "NodeGeometryMeshCube");
+      node->storage = storage;
+      storage->pivot = NODE_MESH_CUBE_PIVOT_CENTER;
+    }
+  }
+}
+
 void blo_do_versions_400(FileData *fd, Library * /*lib*/, Main *bmain)
 {
   if (!MAIN_VERSION_FILE_ATLEAST(bmain, 400, 1)) {
@@ -4953,6 +4979,14 @@ void blo_do_versions_400(FileData *fd, Library * /*lib*/, Main *bmain)
   LISTBASE_FOREACH (Mesh *, mesh, &bmain->meshes) {
     blender::bke::mesh_sculpt_mask_to_generic(*mesh);
   }
+
+  /* Update pivot properties for grid and cube mesh nodes regardless of version */
+  LISTBASE_FOREACH (bNodeTree *, ntree, &bmain->nodetrees) {
+    if (ntree->type == NTREE_GEOMETRY) {
+      version_geometry_nodes_primitive_pivots(*ntree);
+    }
+  }
+  
 
   /**
    * Always bump subversion in BKE_blender_version.h when adding versioning

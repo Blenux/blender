@@ -3108,3 +3108,21 @@ typedef enum NodeGeometryTransformMode {
   GEO_NODE_TRANSFORM_MODE_COMPONENTS = 0,
   GEO_NODE_TRANSFORM_MODE_MATRIX = 1,
 } NodeGeometryTransformMode;
+
+typedef struct NodeGeometryMeshCube {
+  int pivot;
+} NodeGeometryMeshCube;
+
+typedef enum eNodeMeshCubePivot {
+  NODE_MESH_CUBE_PIVOT_CENTER = 0,    /* Center (Default) */
+  NODE_MESH_CUBE_PIVOT_CORNER_FRONT_LEFT = 1, /* Corner */
+} eNodeMeshCubePivot;
+
+typedef struct NodeGeometryMeshGrid {
+  int pivot;
+} NodeGeometryMeshGrid;
+
+typedef enum eNodeMeshGridPivot {
+  NODE_MESH_GRID_PIVOT_CENTER = 0,    /* Center (Default) */
+  NODE_MESH_GRID_PIVOT_CORNER_FRONT_LEFT = 1, /* Corner */
+} eNodeMeshGridPivot;

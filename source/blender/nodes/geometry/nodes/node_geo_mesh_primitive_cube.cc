@@ -2,6 +2,7 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later */
 
+#include "BLI_string.h"
 #include "BLI_math_euler.hh"
 
 #include "BKE_material.h"
@@ -15,6 +16,24 @@
 #include "node_geometry_util.hh"
 
 namespace blender::nodes::node_geo_mesh_primitive_cube_cc {
+
+/* Pivot positions */
+enum {
+  GEO_NODE_CUBE_PIVOT_CENTER = 0,    /* Center (Default) */
+  GEO_NODE_CUBE_PIVOT_CORNER_FRONT_LEFT = 1, /* Corner */
+};
+
+struct NodeGeometryMeshCube {
+  int pivot;
+};
+
+NODE_STORAGE_FUNCS(NodeGeometryMeshCube)
+
+static EnumPropertyItem pivot_items[] = {
+    {NODE_MESH_CUBE_PIVOT_CENTER, "CENTER", 0, "Center", "Center pivot (0, 0, 0)"},
+    {NODE_MESH_CUBE_PIVOT_CORNER_FRONT_LEFT, "CORNER_FRONT_LEFT", 0, "Corner", "Front left corner pivot (0.5, 0.5, 0.5)"},
+    {0, nullptr, 0, nullptr, nullptr},
+};
 
 static void node_declare(NodeDeclarationBuilder &b)
 {
@@ -40,6 +59,45 @@ static void node_declare(NodeDeclarationBuilder &b)
       .description("Number of vertices for the Z side of the shape");
   b.add_output<decl::Geometry>("Mesh");
   b.add_output<decl::Vector>("UV Map").field_on_all();
+}
+
+static void node_init(bNodeTree * /*tree*/, bNode *node)
+{
+  NodeGeometryMeshCube *data = MEM_cnew<NodeGeometryMeshCube>(__func__);
+  data->pivot = NODE_MESH_CUBE_PIVOT_CENTER;
+  node->storage = data;
+}
+
+static void node_rna(StructRNA *srna)
+{
+  RNA_def_node_enum(srna,
+                   "pivot",
+                   "Pivot",
+                   "Position of the pivot point",
+                   pivot_items,
+                   NOD_storage_enum_accessors(pivot),
+                   NODE_MESH_CUBE_PIVOT_CENTER);
+}
+
+static void node_layout(uiLayout *layout, bContext * /*C*/, PointerRNA *ptr)
+{
+  uiLayoutSetPropSep(layout, false);
+  uiLayoutSetPropDecorate(layout, false);
+  uiItemR(layout, ptr, "pivot", UI_ITEM_NONE, nullptr, ICON_NONE);
+}
+
+static float3 calculate_pivot_offset(const int pivot, const float3 size)
+{
+  const float3 half_size = size * 0.5f;
+  
+  switch (pivot) {
+    case NODE_MESH_CUBE_PIVOT_CENTER:
+      return float3(0);
+    case NODE_MESH_CUBE_PIVOT_CORNER_FRONT_LEFT:
+      return half_size;  /* Move pivot to front left corner */
+    default:
+      return float3(0);
+  }
 }
 
 static Mesh *create_cube_mesh(const float3 size,
@@ -105,7 +163,11 @@ static void node_geo_exec(GeoNodeExecParams params)
   std::optional<std::string> uv_map_id = params.get_output_anonymous_attribute_id_if_needed(
       "UV Map");
 
+  const NodeGeometryMeshCube &storage = node_storage(params.node());
+  const float3 pivot_offset = calculate_pivot_offset(storage.pivot, size);
+
   Mesh *mesh = create_cube_mesh(size, verts_x, verts_y, verts_z, uv_map_id);
+  geometry::transform_mesh(*mesh, pivot_offset, math::Quaternion(), float3(1));
   BKE_id_material_eval_ensure_default_slot(&mesh->id);
 
   params.set_output("Mesh", GeometrySet::from_mesh(mesh));
@@ -118,8 +180,14 @@ static void node_register()
   geo_node_type_base(&ntype, GEO_NODE_MESH_PRIMITIVE_CUBE, "Cube", NODE_CLASS_GEOMETRY);
   ntype.declare = node_declare;
   ntype.geometry_node_execute = node_geo_exec;
+  ntype.draw_buttons = node_layout;
+  ntype.initfunc = node_init;
+  node_rna(ntype.rna_ext.srna);
+  BLI_strncpy(ntype.storagename, "NodeGeometryMeshCube", sizeof(ntype.storagename));
+  ntype.enum_name_legacy = "MESH_PRIMITIVE_CUBE";
   blender::bke::node_register_type(&ntype);
 }
+
 NOD_REGISTER_NODE(node_register)
 
 }  // namespace blender::nodes::node_geo_mesh_primitive_cube_cc
