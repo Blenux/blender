@@ -4,6 +4,8 @@ linking to external resources instead of including content in-line.
 See 'release/text/readme.html' for the end user read-me.
 -->
 
+This fork is basically just the mirror and some of my own custom release builds, future branchs etc.
+
 Blender
 =======
 
