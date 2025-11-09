@@ -12,6 +12,7 @@
 #include "COLLADAFWMeshVertexData.h"
 #include "COLLADAFWPolygons.h"
 
+#include "BKE_attribute.h"
 #include "BKE_attribute.hh"
 #include "BKE_customdata.hh"
 #include "BKE_global.hh"
@@ -1113,7 +1114,7 @@ Object *MeshImporter::create_mesh_object(
   }
 
   /* clean up the mesh */
-  BKE_mesh_validate((Mesh *)ob->data, false, false);
+  BKE_mesh_calc_area((Mesh *)ob->data);
 
   return ob;
 }

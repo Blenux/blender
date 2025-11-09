@@ -4,6 +4,7 @@
 #pragma once
 
 #include <stddef.h>
+#include <stdbool.h>
 
 /** \file
  * \ingroup bke
