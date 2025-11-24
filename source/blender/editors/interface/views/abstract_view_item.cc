@@ -258,7 +258,7 @@ void AbstractViewItem::delete_item(bContext * /*C*/)
   /* No deletion by default. Needs type specific implementation. */
 }
 
-void AbstractViewItem::on_filter()
+void AbstractViewItem::on_filter_change()
 {
   /* No action by default. Needs type specific implementation. */
 }
